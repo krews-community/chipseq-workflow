@@ -2,6 +2,8 @@ package task
 
 import krews.core.*
 import krews.file.*
+
+import mu.KotlinLogging
 import org.reactivestreams.Publisher
 
 data class Macs2Params(
@@ -34,12 +36,11 @@ data class Macs2Output(
 fun WorkflowBuilder.macs2Task(name:String,i: Publisher<Macs2Input>) = this.task<Macs2Input, Macs2Output>(name, i) {
     val params = taskParams<Macs2Params>()
 
-   // dockerImage = "genomealmanac/atacseq-macs2:1.0.4"
     dockerImage = "genomealmanac/chipseq-macs2:v1.0.6"
 
     val prefix = "macs2/${input.repName}"
     val npPrefix = "$prefix.pval${params.pvalThresh}.${capNumPeakFilePrefix(params.capNumPeak)}"
- //   val fg = readFraglen("${outputsDir}/${input.fragLen.path}")
+
     output =
             Macs2Output(
                     npeak = OutputFile("$npPrefix.narrowPeak.gz"),

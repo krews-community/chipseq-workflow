@@ -30,7 +30,6 @@ data class OverlapOutput(
 fun WorkflowBuilder.OverlapTask(name:String,i: Publisher<OverlapInput>) = this.task<OverlapInput, OverlapOutput>(name, i) {
     val params = taskParams<OverlapParams>()
 
-    // dockerImage = "genomealmanac/atacseq-macs2:1.0.4"
     dockerImage = "genomealmanac/chipseq-overlap:v1.0.1"
 
     val prefix = "overlap/${input.repName}"

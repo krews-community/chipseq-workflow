@@ -19,7 +19,6 @@ data class PoolTaOutput(
 
 fun WorkflowBuilder.pooledtaTask(tag: String, i: Publisher<PoolTaInput>) = this.task<PoolTaInput, PoolTaOutput>(tag, i) {
 
-   // dockerImage = "genomealmanac/psychencode-chipseq-pseudoreps:0.0.1"
     dockerImage = "genomealmanac/chipseq-pooledta:v1.0.0"
 
     output =

@@ -41,8 +41,7 @@ data class FilterOutput(
 fun WorkflowBuilder.filterTask(name: String,  i: Publisher<FilterInput>) = this.task<FilterInput, FilterOutput>(name, i) {
     val params = taskParams<FilterParams>()
 
-  //  dockerImage = "genomealmanac/psychencode-chipseq-filter-alignments:0.0.1"
-    dockerImage = "genomealmanac/chipseq-filter:v1.0.1"
+    dockerImage = "genomealmanac/chipseq-filter:v1.0.0"
 
     val prefix = "filter/${input.repName}"
   //  val prefixBed = "bed/${input.repName}"
@@ -65,26 +64,15 @@ fun WorkflowBuilder.filterTask(name: String,  i: Publisher<FilterInput>) = this.
                     mitoDupLog = if (noDupRemoval) null else OutputFile("$prefix.mito_dup.txt")
             )
 
-   /* command =
-            """
-        /app/encode_filter.py \
-            ${input.bam.dockerPath} \
-            --out-dir $dockerPath/filter \
-            --output-prefix ${input.repName} \
-            ${if (input.pairedEnd) "--paired-end" else ""} \
-            ${if (params.sponges.filename() != "") "--sponges" else ""} \
-            --multimapping ${params.multimapping} \
-            --dup-marker ${params.dupMarker.toLowerCase()} \
-            --mapq-thresh ${params.mapqThresh} \
-            ${if (params.noDupRemoval) "--no-dup-removal" else ""}
-        """*/
+
     command =
             """
           java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1  -jar /app/chipseq.jar \
                 -bam ${input.bam.dockerPath} \
                 -outputDir ${outputsDir}/filter \
                 -outputPrefix  ${input.repName} \
-                -parallelism 16
+                -parallelism 32 \
+                 ${if (input.pairedEnd) "-pairedEnd" else ""}
             """
 
 }

@@ -28,7 +28,6 @@ data class ChooseCtlOutput(
 
 fun WorkflowBuilder.choosectlTask(tag: String, i: Publisher<ChooseCtlInput>) = this.task<ChooseCtlInput, ChooseCtlOutput>(tag, i) {
 
-    // dockerImage = "genomealmanac/psychencode-chipseq-pseudoreps:0.0.1"
     dockerImage = "genomealmanac/chipseq-choose-ctl:v1.0.1"
     val params = taskParams<ChooseCtlParams>()
     val oFiles = mutableListOf<ctls>()
@@ -45,12 +44,12 @@ fun WorkflowBuilder.choosectlTask(tag: String, i: Publisher<ChooseCtlInput>) = t
     command =
             """
                java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1  -jar /app/chipseq.jar \
-              ${input.taFiles.joinToString(" ") { it -> " -taFiles  ${it.dockerPath}" }} \
-              ${input.ctaFiles.joinToString(" ") { it -> " -ctaFiles  ${it.dockerPath}" }} \
+              ${input.taFiles.joinToString(" ") { " -taFiles  ${it.dockerPath}" }} \
+              ${input.ctaFiles.joinToString(" ") { " -ctaFiles  ${it.dockerPath}" }} \
               -ctlpooledta ${input.ctaPooledFile.dockerPath}  \
-               ${input.repNames.joinToString(" ") { it -> " -outputPrefix  ${it}" }} \
+               ${input.repNames.joinToString(" ") {  " -outputPrefix  ${it}" }} \
                -outputDir ${outputsDir}/choosectl \
-                 ${if (params.alwaysUsePooledCtl) " -always-use-pooled-ctl" else ""} \
+                ${if (params.alwaysUsePooledCtl) " -always-use-pooled-ctl" else ""} \
                -ctl-depth-ratio ${params.ctlDepthRatio}
               """
 

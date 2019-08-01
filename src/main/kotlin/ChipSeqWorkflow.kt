@@ -21,7 +21,7 @@ val chipSeqWorkflow = workflow("encode-chipseq-workflow") {
             .toFlux()
     val bwaTaskIps = bwaTask("align-ips", bwaInputIps)
 
-    val bwaInputControls = params.replicatesCTRL.replicates
+   /* val bwaInputControls = params.replicatesCTRL.replicates
             .map { BwaInput(it) }
             .toFlux()
     val bwaTaskControl = bwaTask("align-controls", bwaInputControls)
@@ -83,6 +83,8 @@ val chipSeqWorkflow = workflow("encode-chipseq-workflow") {
 
     val roundedMeanInput  =  xcorTask.buffer().map { xcorOutput -> roundedmeanInput(xcorOutput.map {it.Fraglen},"roundedmean")}
     val roundedMeanTask =  roundedmeanTask("roundedmean",roundedMeanInput)
+
+
 
     val macspooledInput = pooledTaTask.map { bit -> Macs2Input(bit.pooledTa,pooledCtlTaTask.buffer().map { co -> co.first() }.toIterable().first().pooledTa,
             bit.repName+"_macs2_pooled",false,
@@ -167,7 +169,7 @@ val chipSeqWorkflow = workflow("encode-chipseq-workflow") {
             macs2pooledTask.buffer().map { co -> co.first() }.toIterable().first()!!.npeak,
             roundedMeanTask.buffer().map { co -> co.first() }.toIterable().first()!!.Fraglen,
             bit.pooledTa, "ppr") }
-    val overlap_ppr_Task = OverlapTask("overlap-ppr",overlap_ppr_Input)
+    val overlap_ppr_Task = OverlapTask("overlap-ppr",overlap_ppr_Input)*/
 
 }
 

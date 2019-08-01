@@ -26,7 +26,6 @@ data class XcorOutput(
 fun WorkflowBuilder.XcorTask(name: String,i: Publisher<XcorInput>) = this.task<XcorInput, XcorOutput>(name, i) {
     val params = taskParams<XcorParams>()
 
-    // dockerImage = "genomealmanac/atacseq-bam2ta:1.0.4"
     dockerImage = "genomealmanac/chipseq-xcor:v1.0.0"
     output =
             XcorOutput(

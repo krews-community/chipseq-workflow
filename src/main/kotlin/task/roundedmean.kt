@@ -18,7 +18,6 @@ data class roundedmeanOutput(
 fun WorkflowBuilder.roundedmeanTask(name: String,i: Publisher<roundedmeanInput>) = this.task<roundedmeanInput, roundedmeanOutput>(name, i) {
     val params = taskParams<XcorParams>()
 
-    // dockerImage = "genomealmanac/atacseq-bam2ta:1.0.4"
     dockerImage = "genomealmanac/chipseq-roundedmean:v1.0.0"
     output =
             roundedmeanOutput(
