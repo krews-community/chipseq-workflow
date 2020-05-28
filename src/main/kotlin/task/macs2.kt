@@ -8,7 +8,8 @@ import org.reactivestreams.Publisher
 
 data class Macs2Params(
         val chrsz: File,
-        val blacklist: File,
+        val blacklist: File?,
+        val cta: File?,
         val gensz: String? = "hs",
         val capNumPeak: Int = 500_000,
         val pvalThresh: Double = 0.01,
@@ -36,7 +37,7 @@ data class Macs2Output(
 fun WorkflowBuilder.macs2Task(name:String,i: Publisher<Macs2Input>) = this.task<Macs2Input, Macs2Output>(name, i) {
     val params = taskParams<Macs2Params>()
 
-    dockerImage = "genomealmanac/chipseq-macs2:v1.0.6"
+    dockerImage = "genomealmanac/chipseq-macs2:v1.0.18"
 
     val prefix = "macs2/${input.repName}"
     val npPrefix = "$prefix.pval${params.pvalThresh}.${capNumPeakFilePrefix(params.capNumPeak)}"
@@ -54,9 +55,10 @@ fun WorkflowBuilder.macs2Task(name:String,i: Publisher<Macs2Input>) = this.task<
 
     command =
             """
+             export TMPDIR="${outputsDir}"
              java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -jar /app/chipseq.jar \
                 -ta ${input.ta.dockerPath} \
-                 ${if (input.cta != null) "-cta ${input.cta!!.dockerPath}" else ""} \
+                ${if (params.cta != null) "-cta ${params.cta!!.dockerPath}" else ""} \
                  -outputDir ${outputsDir}/macs2 \
                 -outputPrefix ${input.repName} \
                 ${if (params.gensz != null) "-gensz ${params.gensz}" else ""} \
@@ -64,7 +66,7 @@ fun WorkflowBuilder.macs2Task(name:String,i: Publisher<Macs2Input>) = this.task<
                 -pvalthresh ${params.pvalThresh} \
                  -cap-num-peak ${params.capNumPeak} \
                 -fraglen ${input.fragLen.dockerPath} \
-                -blacklist ${params.blacklist.dockerPath} \
+                ${if (params.blacklist != null) "-blacklist ${params.blacklist.dockerPath} " else ""} \
                 ${if (params.makeSignal) "-make-signal" else ""} \
                 ${if (input.pairedEnd) "-pairedEnd" else ""}
             """

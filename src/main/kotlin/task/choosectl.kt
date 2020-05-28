@@ -28,7 +28,7 @@ data class ChooseCtlOutput(
 
 fun WorkflowBuilder.choosectlTask(tag: String, i: Publisher<ChooseCtlInput>) = this.task<ChooseCtlInput, ChooseCtlOutput>(tag, i) {
 
-    dockerImage = "genomealmanac/chipseq-choose-ctl:v1.0.1"
+    dockerImage = "genomealmanac/chipseq-choose-ctl:v1.0.2"
     val params = taskParams<ChooseCtlParams>()
     val oFiles = mutableListOf<ctls>()
 

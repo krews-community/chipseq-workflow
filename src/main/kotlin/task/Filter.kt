@@ -9,8 +9,9 @@ import org.reactivestreams.Publisher
 
 
 data class FilterParams(
+        val sponge: File?,
         val multimapping: Int = 0,
-        val mapqThresh: Int = 30,
+        val mapqThresh: Int = 20,
         val dupMarker: String = "PICARD",
         val noDupRemoval: Boolean = false
 )
@@ -41,7 +42,7 @@ data class FilterOutput(
 fun WorkflowBuilder.filterTask(name: String,  i: Publisher<FilterInput>) = this.task<FilterInput, FilterOutput>(name, i) {
     val params = taskParams<FilterParams>()
 
-    dockerImage = "genomealmanac/chipseq-filter:v1.0.0"
+    dockerImage = "genomealmanac/chipseq-filter:v1.0.9"
 
     val prefix = "filter/${input.repName}"
   //  val prefixBed = "bed/${input.repName}"
@@ -72,7 +73,9 @@ fun WorkflowBuilder.filterTask(name: String,  i: Publisher<FilterInput>) = this.
                 -outputDir ${outputsDir}/filter \
                 -outputPrefix  ${input.repName} \
                 -parallelism 32 \
-                 ${if (input.pairedEnd) "-pairedEnd" else ""}
+                -mapqThresh ${params.mapqThresh} \
+                ${if (params.sponge != null) "-sponge ${params.sponge.dockerPath} " else ""} \
+                ${if (input.pairedEnd) "-pairedEnd" else ""}
             """
 
 }

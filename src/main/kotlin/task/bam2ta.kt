@@ -14,7 +14,8 @@ data class Bam2taParams(
 data class Bam2taInput(
         val bam: File,
         val repName: String,
-        val pairedEnd: Boolean
+        val pairedEnd: Boolean,
+        val xcorTa: Boolean? = false
 )
 
 data class Bam2taOutput(
@@ -26,7 +27,7 @@ data class Bam2taOutput(
 fun WorkflowBuilder.bam2taTask(name: String,i: Publisher<Bam2taInput>) = this.task<Bam2taInput, Bam2taOutput>(name, i) {
     val params = taskParams<Bam2taParams>()
 
-    dockerImage = "genomealmanac/chipseq-bam2ta:v1.0.0"
+    dockerImage = "genomealmanac/chipseq-bam2ta:v1.0.4"
     output =
             Bam2taOutput(
                     ta = OutputFile("bam2ta/${input.repName}.tagAlign.gz"),
@@ -40,6 +41,7 @@ fun WorkflowBuilder.bam2taTask(name: String,i: Publisher<Bam2taInput>) = this.ta
                -bam ${input.bam.dockerPath} \
                -outputDir ${outputsDir}/bam2ta \
                 -outputPrefix ${input.repName} \
+                ${if (input.xcorTa!==null && input.xcorTa==true) "-xcorta" else ""} \
                 ${if (input.pairedEnd) "-pairedEnd" else ""} \
                 -disable-tn5-shift \
                 -parallelism 16

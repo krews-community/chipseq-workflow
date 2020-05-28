@@ -36,6 +36,7 @@ fun WorkflowBuilder.XcorTask(name: String,i: Publisher<XcorInput>) = this.task<X
 
     command =
             """
+            export TMPDIR="${outputsDir}/xcor"
             java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -jar /app/chipseq.jar \
                -ta ${input.ta.dockerPath} \
                -outputDir ${outputsDir}/xcor \
@@ -44,6 +45,6 @@ fun WorkflowBuilder.XcorTask(name: String,i: Publisher<XcorInput>) = this.task<X
                 -exclusion-range-min ${params.exclusion_range_min} \
                 -subsample ${params.xcor_subsample_reads} \
                 ${if (input.pairedEnd) "-pairedEnd" else ""} \
-                -parallelism 16
+                -parallelism 11
             """
 }

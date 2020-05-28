@@ -22,7 +22,7 @@ data class sprOutput(
 
 fun WorkflowBuilder.sprTask(tag: String, i: Publisher<sprInput>) = this.task<sprInput, sprOutput>(tag, i) {
 
-    dockerImage = "genomealmanac/chipseq-spr:v1.0.0"
+    dockerImage = "genomealmanac/chipseq-spr:v1.0.1"
 
 
     val prefix =  "spr/${input.repName}"
@@ -37,6 +37,7 @@ fun WorkflowBuilder.sprTask(tag: String, i: Publisher<sprInput>) = this.task<spr
 
     command =
             """
+               export TMPDIR="${outputsDir}/spr"
                java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -jar /app/chipseq.jar \
                -taFile ${input.taFile.dockerPath} \
                -outputDir ${outputsDir}/spr \

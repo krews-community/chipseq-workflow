@@ -6,7 +6,7 @@ import org.reactivestreams.Publisher
 
 data class OverlapParams(
         val chrsz: File,
-        val blacklist: File,
+        val blacklist: File?,
         val peakType: String ="narrowPeak"
 )
 
@@ -30,7 +30,7 @@ data class OverlapOutput(
 fun WorkflowBuilder.OverlapTask(name:String,i: Publisher<OverlapInput>) = this.task<OverlapInput, OverlapOutput>(name, i) {
     val params = taskParams<OverlapParams>()
 
-    dockerImage = "genomealmanac/chipseq-overlap:v1.0.1"
+    dockerImage = "genomealmanac/chipseq-overlap:v1.0.3"
 
     val prefix = "overlap/${input.repName}"
     //   val fg = readFraglen("${outputsDir}/${input.fragLen.path}")
@@ -45,6 +45,7 @@ fun WorkflowBuilder.OverlapTask(name:String,i: Publisher<OverlapInput>) = this.t
 
     command =
             """
+             export TMPDIR="${outputsDir}"
              java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -jar /app/chipseq.jar \
                 -peak1 ${input.peak1.dockerPath} \
                  -peak2 ${input.peak2.dockerPath} \
@@ -55,7 +56,7 @@ fun WorkflowBuilder.OverlapTask(name:String,i: Publisher<OverlapInput>) = this.t
                 -outputPrefix ${input.repName} \
                 -peakType ${params.peakType} \
                 -chrsz ${params.chrsz.dockerPath} \
-                -blacklist ${params.blacklist.dockerPath} \
+                ${if (params.blacklist != null) "-blacklist ${params.blacklist.dockerPath} " else ""} \
                 -nonamecheck
             """
 }

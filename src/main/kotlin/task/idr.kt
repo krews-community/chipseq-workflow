@@ -8,8 +8,8 @@ data class IdrParams(
         val chrsz: File,
         val blacklist: File,
         val idrThresh: Double=0.05,
-        val peakType: String ="narrowPeak",
-        val idrRank: String="p.value"
+        val peakType: String ="regionPeak",
+        val idrRank: String="signal.value"
 )
 
 data class IdrInput(
@@ -34,7 +34,7 @@ data class IdrOutput(
 fun WorkflowBuilder.IdrTask(name:String,i: Publisher<IdrInput>) = this.task<IdrInput, IdrOutput>(name, i) {
     val params = taskParams<IdrParams>()
 
-    dockerImage = "genomealmanac/chipseq-idr:v1.0.0"
+    dockerImage = "genomealmanac/chipseq-idr:v1.0.4"
 
     val prefix = "idr/${input.repName}"
     val npPrefix = "$prefix.idr${params.idrThresh}"

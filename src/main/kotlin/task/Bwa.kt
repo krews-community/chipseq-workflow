@@ -12,12 +12,16 @@ import org.reactivestreams.Publisher
 
 data class BwaParams(
         val idxTar: File,
+        val bwaIndexprefix:String?="hg19_with_sponges.fa",
         val multimapping: Int? = 4,
         val scoreMin: String? = null
 )
 
 data class BwaInput(
-        val mergedRep: MergedFastqReplicate
+        val repFile1: File,
+        val repFile2: File?,
+        val repName: String,
+        val pairedEnd: Boolean
 )
 
 data class BwaOutput(
@@ -33,30 +37,30 @@ data class BwaOutput(
 fun WorkflowBuilder.bwaTask(name: String, i: Publisher<BwaInput>) = this.task<BwaInput, BwaOutput>(name, i) {
     val params = taskParams<BwaParams>()
 
-    dockerImage = "genomealmanac/chipseq-bwa:v1.0.1"
+    dockerImage = "genomealmanac/chipseq-bwa:v1.0.3"
 
-    val prefix = "bwa/${input.mergedRep.name}"
+    val prefix = "bwa/${input.repName}"
     output =
             BwaOutput(
-                    repName = input.mergedRep.name,
-                    pairedEnd = input.mergedRep is MergedFastqReplicatePE,
+                    repName = input.repName,
+                    pairedEnd = input.pairedEnd,
                     bam = OutputFile("$prefix.bam"),
                     bai = OutputFile("$prefix.bam.bai"),
                     flagstatQC = OutputFile("$prefix.flagstat.qc")
             )
 
-    val mergedRep = input.mergedRep
+   // val mergedRep = input.mergedRep
     command =
             """
           java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -jar /app/chipseq.jar \
                 -indexFile ${params.idxTar.dockerPath} \
                 -outputDir ${outputsDir}/bwa \
-                -name ${mergedRep.name} \
-                -parallelism 64 \
-                ${if (mergedRep is MergedFastqReplicateSE) "-repFile1  ${mergedRep.merged.dockerPath}" else ""} \
-                 ${if (mergedRep is MergedFastqReplicatePE) "-repFile1  ${mergedRep.mergedR1.dockerPath}" else ""} \
-                   ${if (mergedRep is MergedFastqReplicatePE) "-repFile2  ${mergedRep.mergedR2.dockerPath}" else ""} \
-                     ${if (mergedRep is MergedFastqReplicatePE) "-pairedEnd" else ""}
-
+                -name ${input.repName} \
+                -parallelism 96 \
+                 ${if (!input.pairedEnd) "-repFile1  ${input.repFile1.dockerPath}" else ""} \
+                 ${if (input.pairedEnd) "-repFile1  ${input.repFile1.dockerPath}" else ""} \
+                 ${if (input.pairedEnd) "-repFile2  ${input.repFile2!!.dockerPath}" else ""} \
+                 ${if (input.pairedEnd) "-pairedEnd" else ""} \
+                -use-bwa-mem-for-pe
             """
 }
