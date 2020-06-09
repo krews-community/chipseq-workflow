@@ -36,12 +36,12 @@ shadowJar.apply {
     destinationDirectory.set(file("build"))
 }
 
-val publicationName = "rnaseq-workflow"
+val publicationName = "chipseq-workflow"
 publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/krews-community/rnaseq-workflow")
+            url = uri("https://maven.pkg.github.com/krews-community/chipseq-workflow")
             credentials {
                 username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_USER")
                 password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
