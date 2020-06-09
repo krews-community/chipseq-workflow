@@ -45,6 +45,6 @@ fun WorkflowBuilder.XcorTask(name: String,i: Publisher<XcorInput>) = this.task<X
                 -exclusion-range-min ${params.exclusion_range_min} \
                 -subsample ${params.xcor_subsample_reads} \
                 ${if (input.pairedEnd) "-pairedEnd" else ""} \
-                -parallelism 11
+                -parallelism 12
             """
 }
