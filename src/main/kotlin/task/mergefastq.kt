@@ -33,8 +33,8 @@ fun WorkflowBuilder.MergeFastqTask(name: String, i: Publisher<MergeFastqInput>) 
             MergeFastqOutput(
                     repName = input.mergedRep.name,
                     pairedEnd = input.mergedRep is FastqReplicatePE,
-                    mergedFileR1 = OutputFile("mergefastq/${input.mergedRep.name}.merged.r1.fastq.gz"),
-                    mergedFileR2 = if(input.mergedRep is FastqReplicatePE) OutputFile("mergefastq/${input.mergedRep.name}.merged.r2.fastq.gz") else null
+                    mergedFileR1 = OutputFile("${input.mergedRep.name}.merged.r1.fastq.gz"),
+                    mergedFileR2 = if(input.mergedRep is FastqReplicatePE) OutputFile("${input.mergedRep.name}.merged.r2.fastq.gz") else null
             )
 
     val mergedRep = input.mergedRep
