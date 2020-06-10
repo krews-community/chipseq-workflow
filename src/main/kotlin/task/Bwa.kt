@@ -33,7 +33,7 @@ data class BwaOutput(
 fun WorkflowBuilder.bwaTask(name: String, i: Publisher<BwaInput>) = this.task<BwaInput, BwaOutput>(name, i) {
     val params = taskParams<BwaParams>()
 
-    dockerImage = "genomealmanac/chipseq-bwa:v1.0.1"
+    dockerImage = "genomealmanac/chipseq-bwa:v1.0.2"
 
     val prefix = "bwa/${input.mergedRep.name}"
     output =
@@ -47,16 +47,23 @@ fun WorkflowBuilder.bwaTask(name: String, i: Publisher<BwaInput>) = this.task<Bw
 
     val mergedRep = input.mergedRep
     command =
-            """
-          java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -jar /app/chipseq.jar \
-                -indexFile ${params.idxTar.dockerPath} \
-                -outputDir ${outputsDir}/bwa \
-                -name ${mergedRep.name} \
-                -parallelism 64 \
-                ${if (mergedRep is MergedFastqReplicateSE) "-repFile1  ${mergedRep.merged.dockerPath}" else ""} \
-                 ${if (mergedRep is MergedFastqReplicatePE) "-repFile1  ${mergedRep.mergedR1.dockerPath}" else ""} \
-                   ${if (mergedRep is MergedFastqReplicatePE) "-repFile2  ${mergedRep.mergedR2.dockerPath}" else ""} \
-                     ${if (mergedRep is MergedFastqReplicatePE) "-pairedEnd" else ""}
+        """
+        idxFile="${params.idxTar.dockerPath}"
+        if [ `echo "${params.idxTar.dockerPath}" | awk -F"." '{ print ${"$"}NF }'` = "gz" ]
+        then
+          cp ${params.idxTar.dockerPath} $outputsDir/idxTar.tar.gz
+          gunzip $outputsDir/idxTar.tar.gz
+          idxFile="$outputsDir/idxTar.tar"
+        fi
 
-            """
+        java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -jar /app/chipseq.jar \
+            -indexFile ${"$"}idxFile \
+            -outputDir ${outputsDir}/bwa \
+            -name ${mergedRep.name} \
+            -parallelism 64 \
+            ${if (mergedRep is MergedFastqReplicateSE) "-repFile1  ${mergedRep.merged.dockerPath}" else ""} \
+            ${if (mergedRep is MergedFastqReplicatePE) "-repFile1  ${mergedRep.mergedR1.dockerPath}" else ""} \
+            ${if (mergedRep is MergedFastqReplicatePE) "-repFile2  ${mergedRep.mergedR2.dockerPath}" else ""} \
+            ${if (mergedRep is MergedFastqReplicatePE) "-pairedEnd" else ""}
+        """
 }

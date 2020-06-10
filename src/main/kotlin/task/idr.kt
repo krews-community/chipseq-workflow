@@ -34,7 +34,7 @@ data class IdrOutput(
 fun WorkflowBuilder.IdrTask(name:String,i: Publisher<IdrInput>) = this.task<IdrInput, IdrOutput>(name, i) {
     val params = taskParams<IdrParams>()
 
-    dockerImage = "genomealmanac/chipseq-idr:v1.0.0"
+    dockerImage = "genomealmanac/chipseq-idr:v1.0.5"
 
     val prefix = "idr/${input.repName}"
     val npPrefix = "$prefix.idr${params.idrThresh}"
@@ -54,13 +54,13 @@ fun WorkflowBuilder.IdrTask(name:String,i: Publisher<IdrInput>) = this.task<IdrI
             """
              java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -jar /app/chipseq.jar \
                 -peak1 ${input.peak1.dockerPath} \
-                 -peak2 ${input.peak2.dockerPath} \
-                 -pooledPeak ${input.pooledpeak.dockerPath} \
-                    -fraglen ${input.fragLen.dockerPath} \
-                    -idrRank ${params.idrRank} \
-                    -idrthresh ${params.idrThresh} \
-                    -ta ${input.taFile.dockerPath} \
-                 -outputDir ${outputsDir}/idr \
+                -peak2 ${input.peak2.dockerPath} \
+                -pooledPeak ${input.pooledpeak.dockerPath} \
+                -fraglen ${input.fragLen.dockerPath} \
+                -idrRank ${params.idrRank} \
+                -idrthresh ${params.idrThresh} \
+                -ta ${input.taFile.dockerPath} \
+                -outputDir ${outputsDir}/idr \
                 -outputPrefix ${input.repName} \
                 -peakType ${params.peakType} \
                 -chrsz ${params.chrsz.dockerPath} \

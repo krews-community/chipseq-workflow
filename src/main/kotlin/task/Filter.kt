@@ -4,7 +4,6 @@ import krews.core.WorkflowBuilder
 import krews.file.File
 import krews.file.LocalInputFile
 import krews.file.OutputFile
-import org.bouncycastle.asn1.ua.DSTU4145NamedCurves.params
 import org.reactivestreams.Publisher
 
 
@@ -41,7 +40,8 @@ data class FilterOutput(
 fun WorkflowBuilder.filterTask(name: String,  i: Publisher<FilterInput>) = this.task<FilterInput, FilterOutput>(name, i) {
     val params = taskParams<FilterParams>()
 
-    dockerImage = "genomealmanac/chipseq-filter:v1.0.0"
+    //dockerImage = "genomealmanac/chipseq-filter:v1.0.0"
+    dockerImage = "jackh726/encode-chipseq-filter-task:v1.1.2"
 
     val prefix = "filter/${input.repName}"
   //  val prefixBed = "bed/${input.repName}"
@@ -67,7 +67,7 @@ fun WorkflowBuilder.filterTask(name: String,  i: Publisher<FilterInput>) = this.
 
     command =
             """
-          java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1  -jar /app/chipseq.jar \
+          java -jar /app/chipseq.jar \
                 -bam ${input.bam.dockerPath} \
                 -outputDir ${outputsDir}/filter \
                 -outputPrefix  ${input.repName} \

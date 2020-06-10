@@ -8,12 +8,14 @@ import org.reactivestreams.Publisher
 
 data class PoolTaInput(
         val taFiles: List<File>,
-        val repName: String
+        val repName: String,
+        val pairedEnd: Boolean
 )
 
 data class PoolTaOutput(
         val repName: String,
-        val pooledTa: File
+        val pooledTa: File,
+        val pairedEnd: Boolean
 )
 
 
@@ -24,7 +26,8 @@ fun WorkflowBuilder.pooledtaTask(tag: String, i: Publisher<PoolTaInput>) = this.
     output =
             PoolTaOutput(
                     repName = input.repName,
-                    pooledTa = OutputFile("pooledta/${input.repName}.pooled.tagAlign.gz")
+                    pooledTa = OutputFile("pooledta/${input.repName}.pooled.tagAlign.gz"),
+                    pairedEnd = input.pairedEnd
             )
 
      command =
