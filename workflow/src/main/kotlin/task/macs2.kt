@@ -9,7 +9,6 @@ import org.reactivestreams.Publisher
 data class Macs2Params(
         val chrsz: File,
         val blacklist: File?,
-        val cta: File?,
         val gensz: String? = "hs",
         val capNumPeak: Int = 500_000,
         val pvalThresh: Double = 0.01,
@@ -38,7 +37,6 @@ fun WorkflowBuilder.macs2Task(name:String,i: Publisher<Macs2Input>) = this.task<
     val params = taskParams<Macs2Params>()
 
     dockerImage = "genomealmanac/chipseq-macs2:v1.0.18"
-
     val prefix = "macs2/${input.repName}"
     val npPrefix = "$prefix.pval${params.pvalThresh}.${capNumPeakFilePrefix(params.capNumPeak)}"
 
@@ -58,8 +56,8 @@ fun WorkflowBuilder.macs2Task(name:String,i: Publisher<Macs2Input>) = this.task<
              export TMPDIR="${outputsDir}"
              java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -jar /app/chipseq.jar \
                 -ta ${input.ta.dockerPath} \
-                ${if (params.cta != null) "-cta ${params.cta!!.dockerPath}" else ""} \
-                 -outputDir ${outputsDir}/macs2 \
+                ${if (input.cta != null) "-cta ${input.cta!!.dockerPath}" else ""} \
+                -outputDir ${outputsDir}/macs2 \
                 -outputPrefix ${input.repName} \
                 ${if (params.gensz != null) "-gensz ${params.gensz}" else ""} \
                 -chrsz ${params.chrsz.dockerPath} \

@@ -32,9 +32,9 @@ fun WorkflowBuilder.pooledtaTask(tag: String, i: Publisher<PoolTaInput>) = this.
 
         command =
             """
-                 export TMPDIR="${outputsDir}/pooledta"
+             export TMPDIR="${outputsDir}"
              java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1  -jar /app/chipseq.jar \
-            ${input.taFiles.joinToString(" ") { it -> " -taFiles  ${it.dockerPath}" }} \
+             ${input.taFiles.joinToString(" ") { it -> " -taFiles  ${it.dockerPath}" }} \
              -outputDir ${outputsDir}/pooledta \
              -outputPrefix ${input.repName}
             """

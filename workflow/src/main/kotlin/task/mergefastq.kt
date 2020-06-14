@@ -4,19 +4,15 @@ import krews.core.WorkflowBuilder
 import krews.core.*
 import krews.file.File
 import krews.file.OutputFile
-import model.FastqReplicate
-import model.MergedFastqReplicate
-import model.MergedFastqReplicatePE
-import model.MergedFastqReplicateSE
+import model.*
 import org.reactivestreams.Publisher
 import model.*
 
 
 
 data class MergeFastqInput(
-        val mergedRep: FastqReplicate
+    val mergedRep: Replicate
 )
-
 data class MergeFastqOutput(
         val repName: String,
         val pairedEnd: Boolean,
@@ -28,7 +24,6 @@ fun WorkflowBuilder.MergeFastqTask(name: String, i: Publisher<MergeFastqInput>) 
 
     dockerImage =  "alpine:latest"
 
-    val prefix = "mergefastq/${input.mergedRep.name}"
     output =
             MergeFastqOutput(
                     repName = input.mergedRep.name,

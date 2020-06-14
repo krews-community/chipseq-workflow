@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "com.genomealmanac.chipseq"
-version = "1.0.1"
+version = "1.0.2"
 val artifactID = "chipseq-workflow"
 
 repositories {

@@ -4,9 +4,7 @@ import krews.core.WorkflowBuilder
 import krews.core.*
 import krews.file.File
 import krews.file.OutputFile
-import model.MergedFastqReplicate
-import model.MergedFastqReplicatePE
-import model.MergedFastqReplicateSE
+import model.*
 import org.reactivestreams.Publisher
 
 
@@ -19,7 +17,7 @@ data class BwaParams(
 
 data class BwaInput(
         val repFile1: File,
-        val repFile2: File?,
+        val repFile2: File? = null,
         val repName: String,
         val pairedEnd: Boolean
 )
@@ -37,7 +35,7 @@ data class BwaOutput(
 fun WorkflowBuilder.bwaTask(name: String, i: Publisher<BwaInput>) = this.task<BwaInput, BwaOutput>(name, i) {
     val params = taskParams<BwaParams>()
 
-    dockerImage = "genomealmanac/chipseq-bwa:v1.0.3"
+    dockerImage = "genomealmanac/chipseq-bwa:v1.0.2"
 
     val prefix = "bwa/${input.repName}"
     output =
@@ -51,16 +49,22 @@ fun WorkflowBuilder.bwaTask(name: String, i: Publisher<BwaInput>) = this.task<Bw
 
    // val mergedRep = input.mergedRep
     command =
-            """
-          java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -jar /app/chipseq.jar \
-                -indexFile ${params.idxTar.dockerPath} \
-                -outputDir ${outputsDir}/bwa \
-                -name ${input.repName} \
-                -parallelism 96 \
-                 ${if (!input.pairedEnd) "-repFile1  ${input.repFile1.dockerPath}" else ""} \
-                 ${if (input.pairedEnd) "-repFile1  ${input.repFile1.dockerPath}" else ""} \
-                 ${if (input.pairedEnd) "-repFile2  ${input.repFile2!!.dockerPath}" else ""} \
-                 ${if (input.pairedEnd) "-pairedEnd" else ""} \
-                -use-bwa-mem-for-pe
-            """
+    """
+    idxFile="${params.idxTar.dockerPath}"
+    if [ `echo "${params.idxTar.dockerPath}" | awk -F"." '{ print ${"$"}NF }'` = "gz" ]
+    then
+      cp ${params.idxTar.dockerPath} $outputsDir/idxTar.tar.gz
+      gunzip $outputsDir/idxTar.tar.gz
+      idxFile="$outputsDir/idxTar.tar"
+    fi
+    java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -jar /app/chipseq.jar \
+        -indexFile ${"$"}idxFile \
+        -outputDir ${outputsDir}/bwa \
+        -name ${input.repName} \
+        -parallelism 64 \
+        ${if (!input.pairedEnd)"-repFile1  ${input.repFile1.dockerPath}" else ""} \
+        ${if (input.pairedEnd)"-repFile1  ${input.repFile1.dockerPath}" else ""} \
+        ${if (input.pairedEnd) "-repFile2  ${input.repFile2!!.dockerPath}" else ""} \
+        ${if (input.pairedEnd) "-pairedEnd" else ""}
+    """
 }
