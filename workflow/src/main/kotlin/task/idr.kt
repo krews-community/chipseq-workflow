@@ -34,7 +34,7 @@ data class IdrOutput(
 fun WorkflowBuilder.IdrTask(name:String,i: Publisher<IdrInput>) = this.task<IdrInput, IdrOutput>(name, i) {
     val params = taskParams<IdrParams>()
 
-    dockerImage = "genomealmanac/chipseq-idr:v1.0.5"
+    dockerImage = "genomealmanac/chipseq-idr:v1.0.6"
 
     val prefix = "idr/${input.repName}"
     val npPrefix = "$prefix.idr${params.idrThresh}"
