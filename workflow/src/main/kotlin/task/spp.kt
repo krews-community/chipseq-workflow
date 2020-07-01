@@ -52,6 +52,7 @@ fun WorkflowBuilder.SppTask(name:String,i: Publisher<SppInput>) = this.task<SppI
 
     command =
             """
+             export TMPDIR="${outputsDir}"
              java -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1 -jar /app/chipseq.jar \
                 -ta ${input.ta.dockerPath} \
                  ${if (input.cta != null) "-cta ${input.cta!!.dockerPath}" else ""} \
