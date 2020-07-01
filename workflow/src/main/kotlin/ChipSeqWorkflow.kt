@@ -10,7 +10,8 @@ fun main(args: Array<String>) = run(chipSeqWorkflow, args)
 
 data class ChipSeqParams(
     val experiments: List<Experiment>,
-    val tasks: List<String> = listOf("mergefastq-ip","mergefastq-ctl","align-ips","align-controls","filter-ips","filter-controls","bam2ta-ips","bam2ta-controls","spr","xcor-ta","bam2ta-ips-nofilt")
+    val tasks: List<String> = listOf("mergefastq-ip","mergefastq-ctl","align-ips","align-controls","filter-ips","filter-controls","bam2ta-ips","bam2ta-controls","xcor-ta","bam2ta-ips-nofilt","macs2","spr","macs2-pooled","idr","overlap","overlap-pr","overlap-ppr","macs2-pr1","macs2-pr2","macs2-ppr1","macs2-ppr2","spp","spp-pooled","pooled-ta-ips","pooled-ta-control","roundedmean",
+    "pooled-spr-ta-pr1","pooled-spr-ta-pr2","idr-spp")
 
 )
 
@@ -106,19 +107,19 @@ val chipSeqWorkflow = workflow("chipseq-workflow") {
     val pooledIPTaInput = bam2taTaskIP.buffer().map { bam2taOut ->  PoolTaInput(bam2taOut.map { it.ta }, "pooled_ta_ips",bam2taOut.first().pairedEnd)}
     val pooledIPTaTask = pooledtaTask("pooled-ta-ips", pooledIPTaInput)
     
-    val pooledCtlTaInput = bam2taTaskCtl.buffer().map { ctlbam2taOut ->  PoolTaInput(ctlbam2taOut.map { it.ta }, "pooled_ta_ctl",ctlbam2taOut.first().pairedEnd)}
-    val pooledCtlTaTask = pooledtaTask("pooled-ta-control",pooledCtlTaInput)
+    val pooledCtlTaInput = bam2taTaskCtl.buffer().filter { params.tasks.contains("pooled-ta-control") }.map { ctlbam2taOut ->  PoolTaInput(ctlbam2taOut.map { it.ta }, "pooled_ta_ctl",ctlbam2taOut.first().pairedEnd)}
+    val pooledCtlTaTask = pooledtaTask("pooled-ta-control", pooledCtlTaInput)
 
-    /*val sppInput = bam2taTaskIP.map { bit ->  SppInput(bit.ta,
+    val sppInput = bam2taTaskIP.filter { params.tasks.contains("spp") }.map { bit ->  SppInput(bit.ta,
         pooledCtlTaTask.buffer().toIterable().flatten().first().pooledTa ,
-        bit.repName+"_"+pooledCtlTaTask.buffer().toIterable().flatten().first().repName,
+        bit.repName+"_"+"spp"+"_"+pooledCtlTaTask.buffer().toIterable().flatten().first().repName,
         bit.pairedEnd,
         xcorTask.buffer().map { xit ->  xit.find { it.repName.contains(bit.repName) } }.toIterable().first()!!.Fraglen)
     }
-    val sppTask = SppTask("spp",sppInput)*/
+    val sppTask = SppTask("spp",sppInput)
 
 
-    val macs2Input = bam2taTaskIP.map { bit ->  Macs2Input(bit.ta,
+    val macs2Input = bam2taTaskIP.filter { params.tasks.contains("macs2") }.map { bit ->  Macs2Input(bit.ta,
         pooledCtlTaTask.buffer().toIterable().flatten().first().pooledTa ,
         bit.repName+"_"+pooledCtlTaTask.buffer().toIterable().flatten().first().repName,
         bit.pairedEnd,
@@ -126,14 +127,19 @@ val chipSeqWorkflow = workflow("chipseq-workflow") {
         }
     val macs2Task = macs2Task("macs2",macs2Input)
 
-    val roundedMeanInput  =  xcorTask.buffer().map { xcorOutput -> roundedmeanInput(xcorOutput.map {it.Fraglen},"roundedmean")}
+    val roundedMeanInput  =  xcorTask.buffer().filter { params.tasks.contains("roundedmean") }.map { xcorOutput -> roundedmeanInput(xcorOutput.map {it.Fraglen},"roundedmean")}
     val roundedMeanTask =  roundedmeanTask("roundedmean", roundedMeanInput)
 
-    val macspooledInput = pooledIPTaTask.map { bit -> Macs2Input(bit.pooledTa,
+    val macspooledInput = pooledIPTaTask.filter { params.tasks.contains("macs2-pooled") }.map { bit -> Macs2Input(bit.pooledTa,
     pooledCtlTaTask.buffer().map { co -> co.first() }.toIterable().first().pooledTa,
     bit.repName+"_macs2_pooled",bit.pairedEnd,
     roundedMeanTask.buffer().map { co -> co.first() }.toIterable().first().Fraglen) }
     val macs2pooledTask = macs2Task("macs2-pooled",macspooledInput)
+
+    val spppooledInput = pooledIPTaTask.filter { params.tasks.contains("spp-pooled") }.map { bit -> SppInput(bit.pooledTa,pooledCtlTaTask.buffer().map { co -> co.first() }.toIterable().first().pooledTa,
+    bit.repName+"_spp_pooled",bit.pairedEnd,
+    roundedMeanTask.buffer().map { co -> co.first() }.toIterable().first().Fraglen) }
+    val spppooledTask = SppTask("spp-pooled",spppooledInput)
 
     val p = mutableListOf<Pair<String,String>>()
 
@@ -164,22 +170,21 @@ val chipSeqWorkflow = workflow("chipseq-workflow") {
         //   val pooled_ta = pooledTaTask.buffer().map { co -> co.first() }.toIterable().first().pooledTa
         log.info { pr.second }
         log.info { pr.first }
-        val idrInput = pooledIPTaTask.map { bit -> IdrInput(macs2Task.buffer().map { xit ->  xit.find { it -> it.repName.contains(pr.first) } }.toIterable().first()!!.npeak,
+        val idrInput = pooledIPTaTask.filter { params.tasks.contains("idr") }.map { bit -> IdrInput(macs2Task.buffer().map { xit ->  xit.find { it -> it.repName.contains(pr.first) } }.toIterable().first()!!.npeak,
                 macs2Task.buffer().map { xit ->  xit.find { it -> it.repName.contains(pr.second) } }.toIterable().first()!!.npeak,
                 macs2pooledTask.buffer().map { co -> co.first() }.toIterable().first()!!.npeak,
                 roundedMeanTask.buffer().map { co -> co.first() }.toIterable().first().Fraglen,bit.pooledTa,"${pr.first}_${pr.second}") }
         val idrTask = IdrTask("idr",idrInput)
 
-/*
         //idr -spp
-        val idrInput = pooledTaTask.map { bit -> IdrInput(sppTask.buffer().map { xit ->  xit.find { it -> it.repName.contains(pr.first) } }.toIterable().first()!!.npeak,
+        val idrSppInput = pooledIPTaTask.filter { params.tasks.contains("idr-spp") }.map { bit -> IdrInput(sppTask.buffer().map { xit ->  xit.find { it -> it.repName.contains(pr.first) } }.toIterable().first()!!.npeak,
         sppTask.buffer().map { xit ->  xit.find { it -> it.repName.contains(pr.second) } }.toIterable().first()!!.npeak,
-        spppooledTask.buffer().map { xit ->  xit.find { it -> it.repName.contains("pooled_ta_ips_motif"+"_spp_pooled") } }.toIterable().first()!!.npeak,
-        roundedMeanTask.buffer().map { co -> co.first() }.toIterable().first().Fraglen,bit.pooledTa,"${pr.first}_${pr.second}") }
-        val idrTask = IdrTask("idr",idrInput)
-*/
+        spppooledTask.buffer().map { co -> co.first() }.toIterable().first()!!.npeak,
+        roundedMeanTask.buffer().map { co -> co.first() }.toIterable().first().Fraglen,bit.pooledTa,"${pr.first}_${pr.second}_spp") }
+        val idrSppTask = IdrTask("idr-spp",idrSppInput)
 
-        val overlapInput = pooledIPTaTask.map { bit -> OverlapInput(macs2Task.buffer().map { xit ->  xit.find { it.repName.contains(pr.first) } }.toIterable().first()!!.npeak,
+
+        val overlapInput = pooledIPTaTask.filter { params.tasks.contains("overlap") }.map { bit -> OverlapInput(macs2Task.buffer().map { xit ->  xit.find { it.repName.contains(pr.first) } }.toIterable().first()!!.npeak,
         macs2Task.buffer().map { xit ->  xit.find { it.repName.contains(pr.second) } }.toIterable().first()!!.npeak,
         macs2pooledTask.buffer().map { co -> co.first() }.toIterable().first()!!.npeak,
         //macs2pooledTask.buffer().map { xit ->  xit.find { it.repName.contains("pooled_ta_ips_motif"+"_macs2_pooled") } }.toIterable().first()!!.npeak,
@@ -197,13 +202,13 @@ val chipSeqWorkflow = workflow("chipseq-workflow") {
     val sprInput =  sprTaskInput.concatWith(bam2taTaskIP).filter { params.tasks.contains("spr") }.map { sprInput(it.ta,it.repName,it.pairedEnd)}
     val sprTask = sprTask("spr",sprInput)
 
-    val pooledsprTaPr1Input = sprTask.buffer().map { sprOut ->  PoolTaInput(sprOut.map { it.psr1 }, "pooled_spr_ta_pr1",sprOut.first().pairedEnd)}
+    val pooledsprTaPr1Input = sprTask.buffer().filter { params.tasks.contains("pooled-spr-ta-pr1") }.map { sprOut ->  PoolTaInput(sprOut.map { it.psr1 }, "pooled_spr_ta_pr1",sprOut.first().pairedEnd)}
     val pooledsprTaPr1Task = pooledtaTask("pooled-spr-ta-pr1",pooledsprTaPr1Input)
 
-    val pooledsprTaPr2Input = sprTask.buffer().map { sprOut ->  PoolTaInput(sprOut.map { it.psr2 }, "pooled_spr_ta_pr2",sprOut.first().pairedEnd)}
+    val pooledsprTaPr2Input = sprTask.buffer().filter { params.tasks.contains("pooled-spr-ta-pr2") }.map { sprOut ->  PoolTaInput(sprOut.map { it.psr2 }, "pooled_spr_ta_pr2",sprOut.first().pairedEnd)}
     val pooledsprTaPr2Task = pooledtaTask("pooled-spr-ta-pr2",pooledsprTaPr2Input)
 
-    val macs2pr1Input = sprTask.map { bit ->  Macs2Input(bit.psr1,
+    val macs2pr1Input = sprTask.filter { params.tasks.contains("macs2-pr1") }.map { bit ->  Macs2Input(bit.psr1,
             pooledCtlTaTask.buffer().map { co -> co.first() }.toIterable().first().pooledTa,
             //choosectlTask.buffer().toIterable().flatten().first().ctls.find { xit -> xit.repName.contains(bit.repName)}!!.ctlFile ,
             pooledCtlTaTask.buffer().map { co -> co.first() }.toIterable().first().repName+"_pr1",
@@ -213,7 +218,7 @@ val chipSeqWorkflow = workflow("chipseq-workflow") {
     }
     val macs2pr1Task = macs2Task("macs2-pr1",macs2pr1Input)
 
-    val macs2pr2Input = sprTask.map { bit ->  Macs2Input(bit.psr2,
+    val macs2pr2Input = sprTask.filter { params.tasks.contains("macs2-pr2") }.map { bit ->  Macs2Input(bit.psr2,
          //   choosectlTask.buffer().toIterable().flatten().first().ctls.find { xit -> xit.repName.contains(bit.repName)}!!.ctlFile,
          pooledCtlTaTask.buffer().map { co -> co.first() }.toIterable().first().pooledTa,
          pooledCtlTaTask.buffer().map { co -> co.first() }.toIterable().first().repName+"_pr2",
@@ -223,19 +228,19 @@ val chipSeqWorkflow = workflow("chipseq-workflow") {
     }
     val macs2pr2Task = macs2Task("macs2-pr2",macs2pr2Input)
 
-    val macspooledpr1Input = pooledsprTaPr1Task.map { bit -> Macs2Input(bit.pooledTa,
+    val macspooledpr1Input = pooledsprTaPr1Task.filter { params.tasks.contains("macs2-ppr1") }.map { bit -> Macs2Input(bit.pooledTa,
         pooledCtlTaTask.buffer().map { co -> co.first() }.toIterable().first().pooledTa,
             bit.repName+"_macs2_pooled_ppr1",bit.pairedEnd,
             roundedMeanTask.buffer().map { co -> co.first() }.toIterable().first().Fraglen) }
     val macs2pooledpr1Task = macs2Task("macs2-ppr1",macspooledpr1Input)
 
-    val macspooledpr2Input = pooledsprTaPr2Task.map { bit -> Macs2Input(bit.pooledTa,pooledCtlTaTask.buffer().map { co -> co.first() }.toIterable().first().pooledTa,
+    val macspooledpr2Input = pooledsprTaPr2Task.filter { params.tasks.contains("macs2-ppr2") }.map { bit -> Macs2Input(bit.pooledTa,pooledCtlTaTask.buffer().map { co -> co.first() }.toIterable().first().pooledTa,
             bit.repName+"_macs2_pooled_ppr2",bit.pairedEnd,
             roundedMeanTask.buffer().map { co -> co.first() }.toIterable().first().Fraglen) }
     val macs2pooledpr2Task = macs2Task("macs2-ppr2",macspooledpr2Input)
 
     //overlap_pr
-    val overlap_pr_Input = bam2taTaskIP.map { bit -> OverlapInput(macs2pr1Task.buffer().map { xit -> xit.find { it.repName.contains(bit.repName) } }.toIterable().first()!!.npeak,
+    val overlap_pr_Input = bam2taTaskIP.filter { params.tasks.contains("overlap-pr") }.map { bit -> OverlapInput(macs2pr1Task.buffer().map { xit -> xit.find { it.repName.contains(bit.repName) } }.toIterable().first()!!.npeak,
             macs2pr2Task.buffer().map { xit ->  xit.find { it.repName.contains(bit.repName) } }.toIterable().first()!!.npeak,
             macs2Task.buffer().map { xit ->  xit.find { it.repName.contains(bit.repName) } }.toIterable().first()!!.npeak,
             xcorTask.buffer().map { xit ->  xit.find { it.repName.contains(bit.repName) } }.toIterable().first()!!.Fraglen,bit.ta,
@@ -243,7 +248,7 @@ val chipSeqWorkflow = workflow("chipseq-workflow") {
     val overlap_pr_Task = OverlapTask("overlap-pr",overlap_pr_Input)
 
     //overlap_ppr
-    val overlap_ppr_Input = pooledIPTaTask.map { bit -> OverlapInput(
+    val overlap_ppr_Input = pooledIPTaTask.filter { params.tasks.contains("overlap-ppr") }.map { bit -> OverlapInput(
             macs2pooledpr1Task.buffer().map { co -> co.first() }.toIterable().first()!!.npeak,
             macs2pooledpr2Task.buffer().map { co -> co.first() }.toIterable().first()!!.npeak,
             macs2pooledTask.buffer().map { co -> co.first() }.toIterable().first()!!.npeak,
