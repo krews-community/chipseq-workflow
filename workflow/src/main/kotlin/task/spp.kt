@@ -36,7 +36,7 @@ data class SppOutput(
 fun WorkflowBuilder.SppTask(name:String,i: Publisher<SppInput>) = this.task<SppInput, SppOutput>(name, i) {
     val params = taskParams<SppParams>()
 
-    dockerImage = "genomealmanac/chipseq-spp:v1.0.0"
+    dockerImage = "genomealmanac/chipseq-spp:v1.0.1"
 
     val prefix = "spp/${input.repName}"
     val npPrefix = "$prefix.${capNumPeakFilePrefix(params.capNumPeak)}"
